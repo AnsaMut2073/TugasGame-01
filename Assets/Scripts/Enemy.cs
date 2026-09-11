@@ -13,7 +13,7 @@ public class Enemy : MonoBehaviour
     private StateZombie state = StateZombie.IDLE;
     private float waktuSerangTerakhir;
 
-    // Variabel untuk PATROL (dari kode kamu)
+    // Variabel untuk PATROL (dari kode saya)
     private Vector2 titikAwal; // pusat area keliling
     private Vector2 tujuanPatrol; // titik yang sedang dituju
 
@@ -38,7 +38,7 @@ public class Enemy : MonoBehaviour
             player = playerObject.transform;
         }
 
-        // Catat posisi awal untuk PATROL (dari kode kamu)
+        // Catat posisi awal untuk PATROL (dari kode saya)
         titikAwal = transform.position;
         PilihTujuanPatrolBaru();
     }
@@ -65,7 +65,7 @@ public class Enemy : MonoBehaviour
 
     void PerilakuPatrol() 
     { 
-        // ===== DARI KODE KAMU (gerakan patrol) =====
+        // ===== DARI KODE SAYA (gerakan patrol) =====
         transform.position = Vector2.MoveTowards(
             transform.position,
             tujuanPatrol,
@@ -119,7 +119,7 @@ public class Enemy : MonoBehaviour
         return Vector2.Distance(transform.position, player.position);
     }
 
-    // ===== DARI KODE KAMU =====
+    // ===== DARI KODE SAYA =====
     void PilihTujuanPatrolBaru()
     {
         Vector2 acak = UnityEngine.Random.insideUnitCircle * radiusPatrol;
