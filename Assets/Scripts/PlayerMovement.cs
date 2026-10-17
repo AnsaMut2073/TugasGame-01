@@ -1,31 +1,43 @@
 using UnityEngine;
 using UnityEngine.InputSystem; // WAJIB untuk Input System Unity 6
 
-public class PlayerMovement : MonoBehaviour, IDamageable
+// Tinggal tambahkan , GrabableItem di baris kelas
+public class PlayerMovement : MonoBehaviour, IDamageable, GrabableItem
 {
+    [Header("Health System")]
     [SerializeField] private int hp = 100;
-    
+
     public void KenaDamage(int damage)
     {
         hp -= damage;
         Debug.Log("Player kena damage! HP: " + hp);
-        
+
         if (hp <= 0)
         {
             // Logika mati player
         }
     }
 
+    [Header("Movement & Score")]
     public float kecepatan = 5f;
     public int skor = 0;
 
     private Vector2 arahGerak; // menyimpan nilai dari action "Move"
+    
+    [Header("Managers")]
     private GameManager gameManager; // referensi ke GameManager
+    [SerializeField] private InventoryManager inventoryManager; // referensi ke InventoryManager
 
     void Start()
     {
         // Mencari GameManager yang ada di scene
         gameManager = FindFirstObjectByType<GameManager>();
+
+        // Mencari InventoryManager otomatis kalau lupa di-assign di Inspector
+        if (inventoryManager == null)
+        {
+            inventoryManager = FindFirstObjectByType<InventoryManager>();
+        }
     }
 
     // Dipanggil OTOMATIS oleh komponen Player Input (Action: Move)
@@ -62,6 +74,19 @@ public class PlayerMovement : MonoBehaviour, IDamageable
             {
                 gameManager.AmbilKoin();
             }
+        }
+    }
+
+    // --- FUNGSI DARI INTERFACE GrabableItem ---
+    public void AddItem(ItemDetails itemDetails)
+    {
+        if (inventoryManager != null)
+        {
+            inventoryManager.AddItem(itemDetails);
+        }
+        else
+        {
+            Debug.LogWarning("InventoryManager tidak ditemukan saat Player mencoba menambah item!", this);
         }
     }
 }

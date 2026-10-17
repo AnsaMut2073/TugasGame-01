@@ -1,9 +1,4 @@
-using UnityEngine;
-
-public class GrabableItem : MonoBehaviour
+public interface GrabableItem
 {
-    private void GrabItem()
-    {
-        // Implementation for grabbing the item
-    }
+    void AddItem(ItemDetails itemDetails);
 }
