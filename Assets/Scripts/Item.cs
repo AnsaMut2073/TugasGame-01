@@ -2,42 +2,32 @@ using UnityEngine;
 
 public class Item : MonoBehaviour
 {
-    [Header("Item Configuration")]
-    [SerializeField] private ItemDetails itemDetails; // Mengubah nama variabel ke huruf kecil awal (camelCase)
-
-    private void Awake()
+    [SerializeField] private ItemDetails ItemDetails;
+    private GrabableItem itemCollector;
+    
+    void Awake()
     {
-        // Validasi data di awal agar kamu langsung tahu kalau ada prefab item yang lupa diisi data ItemDetails-nya
-        if (itemDetails == null)
+        foreach (MonoBehaviour component in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
         {
-            Debug.LogWarning($"ItemDetails belum di-assign pada GameObject '{gameObject.name}'!", this);
+            if (component is GrabableItem collector)
+            {
+                itemCollector = collector;
+                break;
+            }
+        }
+
+        if (itemCollector == null)
+        {
+            Debug.LogError("No active component implementing GrabableItem was found in the scene.", this);
         }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Pastikan objek yang menabrak adalah Player
-        if (!other.CompareTag("Player")) return;
-
-        // Pastikan data itemDetails tidak null sebelum diproses
-        if (itemDetails == null)
+        if (other.CompareTag("Player") && ItemDetails != null && itemCollector != null)
         {
-            Debug.LogError($"Item '{gameObject.name}' tidak memiliki ItemDetails yang valid!", this);
-            return;
-        }
-
-        // Cari komponen GrabableItem langsung dari objek Player yang menabrak item ini
-        if (other.TryGetComponent<GrabableItem>(out GrabableItem itemCollector))
-        {
-            // Tambahkan item ke kolektor/inventory
-            itemCollector.AddItem(itemDetails);
-
-            // Hancurkan GameObject item dari scene
+            itemCollector.AddItem(ItemDetails);
             Destroy(gameObject);
-        }
-        else
-        {
-            Debug.LogWarning($"Objek bertag 'Player' ({other.name}) menabrak item, tetapi tidak memiliki komponen 'GrabableItem'!", other);
         }
     }
 }

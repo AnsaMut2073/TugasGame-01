@@ -2,160 +2,151 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public class InventoryManager : MonoBehaviour
+public class InventoryManager : MonoBehaviour, GrabableItem
 {
-    [Header("Input System")]
-    private InputAction inventoryAction;
-
-    [Header("UI & Inventory Setup")]
-    [SerializeField] private GameObject inventoryCanvas;
+    InputAction inventoryAction;
+    [SerializeField] private GameObject InventoryCanvas;
     [SerializeField] private int slotCount = 16;
+    [SerializeField] private ItemDetailsPanel detailsPanel;
+    private bool InventoryActive;
+    public ItemSlot[] itemSlot;
 
-    private bool isInventoryActive;
-    private ItemSlot[] itemSlots;
-
-    private void Awake()
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
     {
-        // Cari Action "Inventory" dari Input System
-        inventoryAction = InputSystem.actions?.FindAction("Inventory");
-    }
-
-    private void OnEnable()
-    {
-        if (inventoryAction != null)
-        {
-            inventoryAction.Enable();
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (inventoryAction != null)
-        {
-            inventoryAction.Disable();
-        }
-    }
-
-    private void Start()
-    {
-        if (inventoryCanvas == null)
-        {
-            Debug.LogError("inventoryCanvas belum di-assign pada Inspector!", this);
-            return;
-        }
-
-        inventoryCanvas.SetActive(false);
-        isInventoryActive = false;
-
         CreateSlots();
-    }
+        InventoryCanvas.SetActive(false);
+        inventoryAction = InputSystem.actions.FindAction("Inventory");
+        InventoryActive = false;
 
-    private void Update()
-    {
-        if (inventoryAction == null) return;
-
-        if (inventoryAction.triggered)
+        if (detailsPanel == null)
         {
-            ToggleInventory();
+            Debug.LogWarning("No ItemDetailsPanel is assigned, item details will not be shown.", this);
         }
     }
 
-    public void ToggleInventory()
+    // Update is called once per frame
+    void Update()
     {
-        isInventoryActive = !isInventoryActive;
-        inventoryCanvas.SetActive(isInventoryActive);
-
-        // Freeze atau Unfreeze jalannya permainan saat UI Inventory terbuka
-        Time.timeScale = isInventoryActive ? 0f : 1f;
-
-        Debug.Log("Inventory " + (isInventoryActive ? "Opened" : "Closed"));
+        if (inventoryAction.triggered && InventoryCanvas != null && InventoryActive == false)
+        {
+            InventoryActive = true;
+            Time.timeScale = 0f;
+            Debug.Log("Inventory is active");
+            InventoryCanvas.SetActive(true);
+            ShowFirstItem();
+        } else if (inventoryAction.triggered && InventoryCanvas != null && InventoryActive == true)
+        {
+            InventoryActive = false;
+            Time.timeScale = 1f;
+            Debug.Log("Inventory is deactivated");
+            InventoryCanvas.SetActive(false);
+        }
     }
 
+    // Build the slot objects at runtime so no manual wiring is needed in the scene
     private void CreateSlots()
     {
         ItemSlot slotPrefab = Resources.Load<ItemSlot>("ItemSlot");
         if (slotPrefab == null)
         {
-            Debug.LogError("Prefab 'ItemSlot' tidak ditemukan di dalam folder Resources!");
-            itemSlots = new ItemSlot[0];
+            Debug.LogError("ItemSlot prefab was not found in a Resources folder.", this);
+            itemSlot = new ItemSlot[0];
             return;
         }
 
-        Transform parent = inventoryCanvas.transform;
-        GridLayoutGroup grid = inventoryCanvas.GetComponentInChildren<GridLayoutGroup>(true);
+        // Put the slots inside the GridLayoutGroup container (InventorySlots), if there is one
+        Transform parent = InventoryCanvas.transform;
+        GridLayoutGroup grid = InventoryCanvas.GetComponentInChildren<GridLayoutGroup>(true);
         if (grid != null)
         {
             parent = grid.transform;
         }
 
-        // Hapus child bawaan (jika ada) agar tidak terjadi duplikasi slot di UI Grid
-        foreach (Transform child in parent)
+        itemSlot = new ItemSlot[slotCount];
+        for (int i = 0; i < itemSlot.Length; i++)
         {
-            Destroy(child.gameObject);
-        }
-
-        itemSlots = new ItemSlot[slotCount];
-        for (int i = 0; i < slotCount; i++)
-        {
-            itemSlots[i] = Instantiate(slotPrefab, parent);
-            itemSlots[i].ClearSlot(); // Sembunyikan icon/text awal
+            itemSlot[i] = Instantiate(slotPrefab, parent);
         }
     }
 
     public void AddItem(ItemDetails item)
     {
-        if (itemSlots == null || itemSlots.Length == 0)
+        Debug.Log("Item added to inventory: " + item.ItemName + " Quantity: " + item.Quantity);
+
+        if (itemSlot == null || itemSlot.Length == 0)
         {
-            Debug.LogError("Slot inventoris belum terinisialisasi!", this);
+            Debug.LogWarning("Inventory has no slots, '" + item.ItemName + "' was lost.");
             return;
         }
 
-        if (item == null) return;
-
-        // Buat instance/copy data agar tidak mengubah jumlah asli ScriptableObject secara tidak sengaja
-        ItemDetails remainingItem = Instantiate(item);
-
-        // Step 1: Cari slot yang sudah terisi item berjenis SAMA untuk ditumpuk (Stack)
-        for (int i = 0; i < itemSlots.Length; i++)
+        // Logic to check if item already exists in the inventory and can be stacked
+        for (int i = 0; i < itemSlot.Length; i++)
         {
-            if (itemSlots[i].isFull && itemSlots[i].ItemName == remainingItem.ItemName)
+            if (itemSlot[i].CanStackWith(item.ItemName))
             {
-                itemSlots[i].AddItem(remainingItem);
-                Debug.Log($"Item berhasil ditambahkan (Stacked): {item.ItemName}");
+                itemSlot[i].AddQuantity(item.Quantity);
                 return;
             }
         }
 
-        // Step 2: Jika belum ada item yang sama, cari slot yang KOSONG
-        for (int i = 0; i < itemSlots.Length; i++)
+        // Logic to add the item to an empty slot if it cannot be stacked
+        for (int i = 0; i < itemSlot.Length; i++)
         {
-            if (!itemSlots[i].isFull)
+            if (itemSlot[i].IsEmpty)
             {
-                itemSlots[i].AddItem(remainingItem);
-                Debug.Log($"Item berhasil dimasukkan ke slot baru: {item.ItemName}");
+                itemSlot[i].AddItem(item);
                 return;
             }
         }
 
-        // Step 3: Jika semua slot sudah terisi penuh
-        Debug.LogWarning($"Inventoris penuh! Item {item.ItemName} tidak dapat dimasukkan.", this);
+        Debug.LogWarning("Inventory is full, '" + item.ItemName + "' was lost.");
     }
 
-    public void DeselectAllSlot()
+    // Called by a slot when the player clicks on it
+    public void SelectSlot(ItemSlot slot)
     {
-        if (itemSlots == null) return;
+        DesselectAllSlot();
 
-        foreach (ItemSlot slot in itemSlots)
+        // Show the selection highlight on the clicked slot
+        slot.selectedPanel.SetActive(true);
+        slot.isItemSelected = true;
+
+        // Show the item details on the right-side panel
+        if (detailsPanel != null)
         {
-            if (slot != null)
+            detailsPanel.Show(slot.ItemDetails, slot.itemQuantity);
+        }
+    }
+
+    // When the inventory opens, show the first item on the details panel
+    private void ShowFirstItem()
+    {
+        if (itemSlot != null)
+        {
+            foreach (ItemSlot slot in itemSlot)
             {
-                slot.isItemSelected = false;
-                
-                if (slot.selectedPanel != null)
+                if (!slot.IsEmpty)
                 {
-                    slot.selectedPanel.SetActive(false);
+                    SelectSlot(slot);
+                    return;
                 }
             }
+        }
+
+        // No items yet: leave the panel empty
+        if (detailsPanel != null)
+        {
+            detailsPanel.Clear();
+        }
+    }
+
+    public void DesselectAllSlot()
+    {
+        foreach (ItemSlot slot in itemSlot)
+        {
+            slot.isItemSelected = false;
+            slot.selectedPanel.SetActive(false);
         }
     }
 }
