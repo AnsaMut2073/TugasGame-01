@@ -9,10 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 027c38b5378a73e42a73515d840b1c78, type: 3}
-  m_Name: Item_LingkaranMerah
+  m_Script: {fileID: 11500000, guid: 95e8ed1f049efa64d941317f2ae624c3, type: 3}
+  m_Name: Apple
   m_EditorClassIdentifier: 
-  itemName: Lingkaran Merah
-  quantity: 1
-  itemIcon: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  description: Just a red ball
+  itemName: Apple
+  itemIcon: {fileID: 8544070003509400462, guid: 01929d251fec3fe4cac70d929526ac67, type: 3}
+  itemDescription: ...just an apple.

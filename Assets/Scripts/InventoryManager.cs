@@ -1,152 +1,168 @@
+using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public class InventoryManager : MonoBehaviour, GrabableItem
+public class InventoryManager : MonoBehaviour
 {
-    InputAction inventoryAction;
-    [SerializeField] private GameObject InventoryCanvas;
-    [SerializeField] private int slotCount = 16;
-    [SerializeField] private ItemDetailsPanel detailsPanel;
-    private bool InventoryActive;
-    public ItemSlot[] itemSlot;
+    public static InventoryManager instance;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [Header("Inventory UI")]
+    public GameObject inventoryCanvas;
+    public Transform itemSlotContainer;    // parent tempat ItemSlot di-instantiate
+    public GameObject itemSlotPrefab;
+    public GameObject noItemTXT;
+
+    [Header("Detail Panel")]
+    public Image itemIcon;
+    public TextMeshProUGUI itemNameTXT;
+    public TextMeshProUGUI itemQtyTXT;
+    public TextMeshProUGUI itemDescTXT;
+
+    private const int MAX_STACK = 99;
+
+    private class Entry
     {
-        CreateSlots();
-        InventoryCanvas.SetActive(false);
+        public ItemData data;
+        public int quantity;
+        public InventorySlot slotUI;
+    }
+
+    private List<Entry> entries = new List<Entry>();
+    private InventorySlot selectedSlot;
+
+    private InputAction inventoryAction;
+    private InputAction deselectAction;
+    private bool inventoryActive = false;
+
+    private void Awake()
+    {
+        instance = this;
+    }
+
+    private void Start()
+    {
+        inventoryCanvas.SetActive(false);
         inventoryAction = InputSystem.actions.FindAction("Inventory");
-        InventoryActive = false;
+        deselectAction  = InputSystem.actions.FindAction("DeselectItem");
+        inventoryActive = false;
 
-        if (detailsPanel == null)
-        {
-            Debug.LogWarning("No ItemDetailsPanel is assigned, item details will not be shown.", this);
-        }
+        ClearDetailPanel();
+        RefreshNoItemTXT();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        if (inventoryAction.triggered && InventoryCanvas != null && InventoryActive == false)
+        if (inventoryAction.triggered && inventoryCanvas != null)
         {
-            InventoryActive = true;
-            Time.timeScale = 0f;
-            Debug.Log("Inventory is active");
-            InventoryCanvas.SetActive(true);
-            ShowFirstItem();
-        } else if (inventoryAction.triggered && InventoryCanvas != null && InventoryActive == true)
-        {
-            InventoryActive = false;
-            Time.timeScale = 1f;
-            Debug.Log("Inventory is deactivated");
-            InventoryCanvas.SetActive(false);
+            if (!inventoryActive) OpenInventory();
+            else                  CloseInventory();
         }
+
+        if (inventoryActive && deselectAction.triggered)
+            DeselectCurrent();
     }
 
-    // Build the slot objects at runtime so no manual wiring is needed in the scene
-    private void CreateSlots()
+    private void OpenInventory()
     {
-        ItemSlot slotPrefab = Resources.Load<ItemSlot>("ItemSlot");
-        if (slotPrefab == null)
-        {
-            Debug.LogError("ItemSlot prefab was not found in a Resources folder.", this);
-            itemSlot = new ItemSlot[0];
-            return;
-        }
+        inventoryActive = true;
+        Time.timeScale = 0f;
+        inventoryCanvas.SetActive(true);
 
-        // Put the slots inside the GridLayoutGroup container (InventorySlots), if there is one
-        Transform parent = InventoryCanvas.transform;
-        GridLayoutGroup grid = InventoryCanvas.GetComponentInChildren<GridLayoutGroup>(true);
-        if (grid != null)
-        {
-            parent = grid.transform;
-        }
-
-        itemSlot = new ItemSlot[slotCount];
-        for (int i = 0; i < itemSlot.Length; i++)
-        {
-            itemSlot[i] = Instantiate(slotPrefab, parent);
-        }
+        // Default: item pertama selected (kalau ada item & belum ada yang dipilih)
+        if (selectedSlot == null && entries.Count > 0)
+            SelectSlot(entries[0].slotUI);
     }
 
-    public void AddItem(ItemDetails item)
+    private void CloseInventory()
     {
-        Debug.Log("Item added to inventory: " + item.ItemName + " Quantity: " + item.Quantity);
+        inventoryActive = false;
+        Time.timeScale = 1f;
+        inventoryCanvas.SetActive(false);
+    }
 
-        if (itemSlot == null || itemSlot.Length == 0)
-        {
-            Debug.LogWarning("Inventory has no slots, '" + item.ItemName + "' was lost.");
-            return;
-        }
+    // ================= ADD ITEM =================
+    public bool AddItem(ItemData data, int qty)
+    {
+        Entry entry = entries.Find(e => e.data == data);
 
-        // Logic to check if item already exists in the inventory and can be stacked
-        for (int i = 0; i < itemSlot.Length; i++)
+        if (entry != null)
         {
-            if (itemSlot[i].CanStackWith(item.ItemName))
+            if (entry.quantity >= MAX_STACK)
             {
-                itemSlot[i].AddQuantity(item.Quantity);
-                return;
+                Debug.Log("Inventory sudah penuh!");
+                return false;
             }
-        }
 
-        // Logic to add the item to an empty slot if it cannot be stacked
-        for (int i = 0; i < itemSlot.Length; i++)
+            int space = MAX_STACK - entry.quantity;
+            int toAdd = Mathf.Min(space, qty);
+            entry.quantity += toAdd;
+            entry.slotUI.UpdateQuantity(entry.quantity);
+
+            if (toAdd < qty) Debug.Log("Inventory sudah penuh!");
+            if (selectedSlot == entry.slotUI) ShowDetail(entry.data, entry.quantity);
+        }
+        else
         {
-            if (itemSlot[i].IsEmpty)
-            {
-                itemSlot[i].AddItem(item);
-                return;
-            }
+            int toAdd = Mathf.Min(qty, MAX_STACK);
+
+            GameObject slotObj = Instantiate(itemSlotPrefab, itemSlotContainer);
+            InventorySlot slot = slotObj.GetComponent<InventorySlot>();
+            slot.Setup(data, toAdd, this);
+
+            entries.Add(new Entry { data = data, quantity = toAdd, slotUI = slot });
+
+            if (toAdd < qty) Debug.Log("Inventory sudah penuh!");
         }
 
-        Debug.LogWarning("Inventory is full, '" + item.ItemName + "' was lost.");
+        RefreshNoItemTXT();
+        return true;
     }
 
-    // Called by a slot when the player clicks on it
-    public void SelectSlot(ItemSlot slot)
+    // ================= SELECT / DESELECT =================
+    public void SelectSlot(InventorySlot slot)
     {
-        DesselectAllSlot();
+        if (selectedSlot != null) selectedSlot.SetSelected(false);
 
-        // Show the selection highlight on the clicked slot
-        slot.selectedPanel.SetActive(true);
-        slot.isItemSelected = true;
+        selectedSlot = slot;
+        selectedSlot.SetSelected(true);
 
-        // Show the item details on the right-side panel
-        if (detailsPanel != null)
-        {
-            detailsPanel.Show(slot.ItemDetails, slot.itemQuantity);
-        }
+        Entry entry = entries.Find(e => e.slotUI == slot);
+        if (entry != null) ShowDetail(entry.data, entry.quantity);
     }
 
-    // When the inventory opens, show the first item on the details panel
-    private void ShowFirstItem()
+    public void DeselectCurrent()
     {
-        if (itemSlot != null)
+        if (selectedSlot != null)
         {
-            foreach (ItemSlot slot in itemSlot)
-            {
-                if (!slot.IsEmpty)
-                {
-                    SelectSlot(slot);
-                    return;
-                }
-            }
+            selectedSlot.SetSelected(false);
+            selectedSlot = null;
         }
-
-        // No items yet: leave the panel empty
-        if (detailsPanel != null)
-        {
-            detailsPanel.Clear();
-        }
+        ClearDetailPanel();
     }
 
-    public void DesselectAllSlot()
+    // ================= DETAIL PANEL =================
+    private void ShowDetail(ItemData data, int qty)
     {
-        foreach (ItemSlot slot in itemSlot)
-        {
-            slot.isItemSelected = false;
-            slot.selectedPanel.SetActive(false);
-        }
+        itemIcon.sprite = data.itemIcon;
+        itemIcon.enabled = true;
+        itemNameTXT.text = data.itemName;
+        itemQtyTXT.text = qty.ToString();
+        itemDescTXT.text = data.itemDescription;
+    }
+
+    private void ClearDetailPanel()
+    {
+        itemIcon.sprite = null;
+        itemIcon.enabled = false;
+        itemNameTXT.text = "";
+        itemQtyTXT.text = "";
+        itemDescTXT.text = "";
+    }
+
+    private void RefreshNoItemTXT()
+    {
+        noItemTXT.SetActive(entries.Count == 0);
     }
 }
