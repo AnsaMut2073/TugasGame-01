@@ -2,31 +2,30 @@ using UnityEngine;
 using UnityEngine.InputSystem; // WAJIB untuk Input System Unity 6
 
 // Tinggal tambahkan , GrabableItem di baris kelas
-public class PlayerMovement : MonoBehaviour, IDamageable, GrabableItem
+public class PlayerMovement : MonoBehaviour, GrabableItem
 {
-    [Header("Health System")]
-    [SerializeField] private int hp = 100;
+    [SerializeField] private float _moveSpeed = 5f;
 
-    public void KenaDamage(int damage)
-    {
-        hp -= damage;
-        Debug.Log("Player kena damage! HP: " + hp);
+    private Vector2 _movement;
+    private Rigidbody2D _rb;
+    private Animator _animator;
 
-        if (hp <= 0)
-        {
-            // Logika mati player
-        }
-    }
+    private const string _horizontal = "Horizontal";
+    private const string _vertical = "Vertical";
+    private const string _lastHorizontal = "LastHorizontal";
+    private const string _lastVertical = "LastVertical";
 
-    [Header("Movement & Score")]
-    public float kecepatan = 5f;
     public int skor = 0;
-
-    private Vector2 arahGerak; // menyimpan nilai dari action "Move"
     
     [Header("Managers")]
     private GameManager gameManager; // referensi ke GameManager
     [SerializeField] private InventoryManager inventoryManager; // referensi ke InventoryManager
+
+    private void Awake()
+    {
+        _rb = GetComponent<Rigidbody2D>();
+        _animator = GetComponent<Animator>();
+    }
 
     void Start()
     {
@@ -40,18 +39,21 @@ public class PlayerMovement : MonoBehaviour, IDamageable, GrabableItem
         }
     }
 
-    // Dipanggil OTOMATIS oleh komponen Player Input (Action: Move)
-    void OnMove(InputValue value)
-    {
-        // Mengambil nilai Vector2 dari input (WASD / Panah)
-        arahGerak = value.Get<Vector2>();
-    }
-
     void Update()
     {
-        // Menggerakkan player dengan arahGerak, kecepatan, dan Time.deltaTime agar mulus
-        Vector3 arah = new Vector3(arahGerak.x, arahGerak.y, 0);
-        transform.position += arah * kecepatan * Time.deltaTime;
+        // Logika movement & animasi player
+        
+        _movement.Set(InputManager.Movement.x, InputManager.Movement.y);
+        _rb.linearVelocity = _movement * _moveSpeed;
+
+        _animator.SetFloat(_horizontal, _movement.x);
+        _animator.SetFloat(_vertical, _movement.y);
+
+        if (_movement != Vector2.zero)
+        {
+            _animator.SetFloat(_lastHorizontal, _movement.x);
+            _animator.SetFloat(_lastVertical, _movement.y);
+        }
     }
 
     // Dipanggil otomatis saat Player menyentuh objek ber-Trigger (Koin)
