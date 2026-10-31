@@ -6,28 +6,18 @@ public class Enemy : MonoBehaviour
     [Header("Pengaturan State Machine")]
     [SerializeField] private float jarakDeteksi = 6f; // masuk CHASE
     [SerializeField] private float jarakSerang = 1.2f; // masuk ATTACK
-    [SerializeField] private float jedaSerang = 1f; // detik antar serang
     [SerializeField] private float radiusPatrol = 3f; // area keliling PATROL
 
     // state sekarang -- mulai dari IDLE
     private StateZombie state = StateZombie.IDLE;
-    private float waktuSerangTerakhir;
 
     // Variabel untuk PATROL (dari kode saya)
     private Vector2 titikAwal; // pusat area keliling
     private Vector2 tujuanPatrol; // titik yang sedang dituju
 
-    [Header("Stats")]
-    [SerializeField] public int hp = 100;
     public float ms = 2f;
 
-    [Header("Damage")]
-    [SerializeField] private int damageSaatTabrakan = 10; // dari kode guru
-
     protected Transform player;
-
-    // EVENT: dari kode guru
-    public static event Action<Enemy> OnZombieMati;
 
     protected virtual void Start()
     {
@@ -54,7 +44,6 @@ public class Enemy : MonoBehaviour
             case StateZombie.IDLE: PerilakuIdle(); break;
             case StateZombie.PATROL: PerilakuPatrol(); break;
             case StateZombie.CHASE: PerilakuChase(); break;
-            case StateZombie.ATTACK: PerilakuAttack(); break;
         }
     }
 
@@ -82,16 +71,6 @@ public class Enemy : MonoBehaviour
     void PerilakuChase() 
     { 
         Kejar(); 
-    }
-
-    void PerilakuAttack()
-    {
-        // menyerang berkala, bukan setiap frame
-        if (Time.time >= waktuSerangTerakhir + jedaSerang)
-        {
-            Serang();
-            waktuSerangTerakhir = Time.time;
-        }
     }
 
     void PeriksaTransisi()
@@ -135,50 +114,5 @@ public class Enemy : MonoBehaviour
             player.position,
             ms * Time.deltaTime
         );
-    }
-
-    public virtual void Serang()
-    {
-        Debug.Log(name + " menyerang!");
-        // Nanti akan diisi dengan logika serang yang sebenarnya
-    }
-
-    // ===== DARI KODE GURU (Damage System) =====
-    public void KenaDamage(int damage)
-    {
-        hp -= damage;
-        Debug.Log(name + " kena damage: " + damage + ", HP sekarang: " + hp);
-        
-        if (hp <= 0)
-        {
-            Mati();
-        }
-    }
-
-    protected virtual void Mati()
-    {
-        Debug.Log(name + " mati!");
-        OnZombieMati?.Invoke(this); // event dipanggil
-        Destroy(gameObject);
-    }
-
-    // ===== DARI KODE GURU (Tabrakan dengan Player) =====
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            IDamageable playerScript = other.GetComponent<IDamageable>();
-            if (playerScript != null)
-            {
-                playerScript.KenaDamage(damageSaatTabrakan);
-            }
-        }
-    }
-
-    // ===== DARI KODE GURU (Testing di Inspector) =====
-    [ContextMenu("Tes Event: Zombie Mati")]
-    void TesEventMati()
-    {
-        Mati();
     }
 }
