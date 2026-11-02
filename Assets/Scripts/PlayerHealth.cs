@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class PlayerHealth : MonoBehaviour
 {
@@ -41,6 +42,11 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
+    public void GameOver()
+    {
+        SceneManager.LoadScene("GameOver");
+    }
+
     void UpdateHealthBar()
     {
         if (healthBar != null)
@@ -56,7 +62,7 @@ public class PlayerHealth : MonoBehaviour
 
     void Die()
     {
-        Debug.Log("Player Mati!");
+        GameOver();
         // Di sini kamu bisa menambahkan logika game over, respawn, dll.
         // gameObject.SetActive(false);
     }
