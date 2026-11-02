@@ -55,5 +55,8 @@ TagManager:
   - name: Player
     uniqueID: 353644187
     locked: 0
+  - name: Sword
+    uniqueID: 2802256807
+    locked: 0
   m_RenderingLayers:
   - Default

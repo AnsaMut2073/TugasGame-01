@@ -6,7 +6,7 @@ public class EnemySpawner : MonoBehaviour
     [Tooltip("Masukkan prefab musuh ke sini")]
     public GameObject enemyPrefab;
     [Tooltip("Jeda antar kemunculan musuh (detik)")]
-    public float spawnInterval = 4f;
+    public float spawnInterval = 3f;
 
     void Start()
     {

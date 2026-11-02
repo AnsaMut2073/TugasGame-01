@@ -5,17 +5,20 @@ public class Enemy : MonoBehaviour
 {
     [Header("Pengaturan State Machine")]
     [SerializeField] private float jarakDeteksi = 6f; // masuk CHASE
-    [SerializeField] private float jarakSerang = 1.2f; // masuk ATTACK
     [SerializeField] private float radiusPatrol = 3f; // area keliling PATROL
 
     // state sekarang -- mulai dari IDLE
     private StateZombie state = StateZombie.IDLE;
 
-    // Variabel untuk PATROL (dari kode saya)
+    // Variabel untuk PATROL
     private Vector2 titikAwal; // pusat area keliling
     private Vector2 tujuanPatrol; // titik yang sedang dituju
 
+    // Kecepatan gerak musuh
     public float ms = 2f;
+
+    // HP musuh
+    public int hp = 1;
 
     protected Transform player;
 
@@ -28,7 +31,7 @@ public class Enemy : MonoBehaviour
             player = playerObject.transform;
         }
 
-        // Catat posisi awal untuk PATROL (dari kode saya)
+        // Catat posisi awal untuk PATROL
         titikAwal = transform.position;
         PilihTujuanPatrolBaru();
     }
@@ -54,7 +57,7 @@ public class Enemy : MonoBehaviour
 
     void PerilakuPatrol() 
     { 
-        // ===== DARI KODE SAYA (gerakan patrol) =====
+        // gerakan patrol
         transform.position = Vector2.MoveTowards(
             transform.position,
             tujuanPatrol,
@@ -73,15 +76,20 @@ public class Enemy : MonoBehaviour
         Kejar(); 
     }
 
+    public void TakeDamage(int damage)
+    {
+        hp -= damage;
+        if (hp <= 0)
+        {
+            Destroy(gameObject);
+        }
+    }
+
     void PeriksaTransisi()
     {
         float jarak = JarakKePlayer();
 
-        if (jarak <= jarakSerang)
-        {
-            state = StateZombie.ATTACK;
-        }
-        else if (jarak <= jarakDeteksi)
+        if (jarak <= jarakDeteksi)
         {
             state = StateZombie.CHASE;
         }
@@ -98,7 +106,6 @@ public class Enemy : MonoBehaviour
         return Vector2.Distance(transform.position, player.position);
     }
 
-    // ===== DARI KODE SAYA =====
     void PilihTujuanPatrolBaru()
     {
         Vector2 acak = UnityEngine.Random.insideUnitCircle * radiusPatrol;
