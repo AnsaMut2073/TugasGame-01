@@ -1,24 +1,29 @@
-# PTS Game Dev 11-09-2026
+## Game States
+a. **MainMenu**
+b. **MainScene**
+c. **PauseGame**
+d. **Inventory**
+e. **GameOver**
 
-## Identitas Siswa
-- **Nama:** Anisa Mutiara Tunggadewi
-- **Absen:** 05
-- **Kelas:** XI PPLG 1
+## Gameplay Mechanics & Features
+1. **Enemy:**
+   - There are two spawn points, the enemies will continue to appear every 3 seconds from their respective spawn points.
+   - Have 3 states: Idle, Patrol, Chase, and Attack.
+   - After attacking the player, they will istantly die.
+   - Each enemy = HP -10.
+2. **Fighting:**
+   - The player has an HP system, default value = 100.
+   - The player can perform an attack action using a sword.
+   - Just by a single slash, enemy will die immediately (because Enemy didn't have the HP system yet).
+3. **Inventory:**
+   - 1 slot = 1 type of item.
+   - Maximum amount for each type is 99.
+   - Can only store items (because there is no feature to retrieve items from the bag / discard item yet).
 
-## Fitur Game
-1. **GameManager:** Mengatur 4 State (MainMenu, Playing, Paused, GameOver).
-2. **PlayerMovement:** Pergerakan player menggunakan Rigidbody2D.
-3. **OOP:**
-   - *Inheritance:* Script `Zombie` mewarisi script `Enemy`.
-   - *Polymorphism:* Script `Zombie` meng-override method `Attack()` dan `TakeDamage()`.
-   - *Abstraction:* Menggunakan Interface `IDamageable`.
-4. **Delegate & Events:**
-   - `GameEvents.cs` (Delegate)
-   - `Coin.cs` (Pemancar Event)
-   - `UIManager.cs` (Penerima Event)
-
-## Cara Menjalankan
-1. Clone repository ini.
-2. Buka project menggunakan Unity Hub.
-3. Buka scene `MainScene.unity`.
-4. Tekan tombol Play.
+## How To Play (Keyboard Only)
+- Walk = WASD
+- Attack = Left click mouse
+- Inventory = I
+   a. Select item = Left click mouse
+   b. Deselect item = Right click mouse
+- Pause game = Esc
