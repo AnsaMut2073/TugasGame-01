@@ -45,6 +45,10 @@ public class PlayerHealth : MonoBehaviour
     public void GameOver()
     {
         SceneManager.LoadScene("GameOver");
+        if (Cursor.visible == false)
+        {
+            Cursor.visible = true;
+        }
     }
 
     void UpdateHealthBar()

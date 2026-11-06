@@ -15,6 +15,14 @@ public class PlayerMovement : MonoBehaviour
     private const string _lastHorizontal = "LastHorizontal";
     private const string _lastVertical = "LastVertical";
 
+    void Start()
+    {
+        if (Cursor.visible == true)
+        {
+            Cursor.visible = false;
+        }
+    }
+
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();

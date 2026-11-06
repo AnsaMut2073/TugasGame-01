@@ -66,6 +66,10 @@ public class InventoryManager : MonoBehaviour
 
     private void OpenInventory()
     {
+        if (Cursor.visible == false)
+        {
+            Cursor.visible = true;
+        }
         inventoryActive = true;
         Time.timeScale = 0f;
         inventoryCanvas.SetActive(true);
@@ -77,6 +81,10 @@ public class InventoryManager : MonoBehaviour
 
     private void CloseInventory()
     {
+        if (Cursor.visible == true)
+        {
+            Cursor.visible = false;
+        }
         inventoryActive = false;
         Time.timeScale = 1f;
         inventoryCanvas.SetActive(false);

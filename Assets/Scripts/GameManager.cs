@@ -18,11 +18,19 @@ public class GameManager : MonoBehaviour
     {
         if (pauseAction.triggered && PauseActive == false && PausePanel != null)
         {
+            if (Cursor.visible == false)
+            {
+                Cursor.visible = true;
+            }
             PauseActive = true;
             Time.timeScale = 0f;
             PausePanel.SetActive(true);
         } else if (pauseAction.triggered && PauseActive == true && PausePanel != null)
         {
+            if (Cursor.visible == true)
+            {
+                Cursor.visible = false;
+            }
             PauseActive = false;
             Time.timeScale = 1f;
             PausePanel.SetActive(false);
