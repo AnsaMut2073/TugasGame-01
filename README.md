@@ -1,9 +1,9 @@
 ## Game States
-a. **MainMenu**
-b. **MainScene**
-c. **PauseGame**
-d. **Inventory**
-e. **GameOver**
+1. **MainMenu**
+2. **MainScene**
+3. **PauseGame**
+4. **Inventory**
+5. **GameOver**
 
 ## Gameplay Mechanics & Features
 1. **Enemy:**
@@ -21,9 +21,9 @@ e. **GameOver**
    - Can only store items (because there is no feature to retrieve items from the bag / discard item yet).
 
 ## How To Play (Keyboard Only)
-- Walk = WASD
-- Attack = Left click mouse
-- Inventory = I
-   a. Select item = Left click mouse
-   b. Deselect item = Right click mouse
-- Pause game = Esc
+1. Walk = WASD
+2. Attack = Left click mouse
+3. Inventory = I
+   - Select item = Left click mouse
+   - Deselect item = Right click mouse
+4. Pause game = Esc
